@@ -26,7 +26,7 @@ public class KDTree {
 	
 	/**
 	 * Calls printHelper, which then prints out the nodes of the tree in preorder traversal
-	 * Mainly used as a test method to see if the output is correct
+	 * Mainly used as a personal test method to see if the output is correct
 	 */
 	public void printTree() {
 		printHelper(root);
@@ -57,6 +57,9 @@ public class KDTree {
 		printHelper(curr.getRight());
 	}
 	
+	/**
+	 * @param filePath
+	 */
 	public void writeToFile(String filePath) {
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
@@ -67,6 +70,10 @@ public class KDTree {
 		}
 	}
 	
+	/**
+	 * @param curr
+	 * @param writer
+	 */
 	private void writeToFileHelper(recordNode curr, BufferedWriter writer) {
 		if (curr == null)
 			return;
@@ -186,9 +193,10 @@ public class KDTree {
 	}
 	
 	/**
+	 * The insertFile method takes in a String filePath containing the filePath of an input file.
+	 * This file will contain data corresponding to new recordNodes that we will create and insert into the tree
 	 * 
-	 * 
-	 * @param filePath	A string containing the filepath of a CSV file, which contains lines of record data to insert into the tree
+	 * @param filePath	A string containing the filepath of a CSV file that we will use for input, which contains lines of record data to insert into the tree
 	 */
 	public void insertFile(String filePath) {
 		try {
@@ -217,8 +225,7 @@ public class KDTree {
 	}
 	
 	/**
-	 * The getLevel method
-	 * calls getLevelHelper to return the level of recordNode r
+	 * The getLevel method calls getLevelHelper to return the level of recordNode r
 	 * 
 	 * @param r	  the recordNode which we are trying to find the level of
 	 * @return an integer representing the level of recordNode r in the current tree or -1 if it's not in the tree
@@ -228,7 +235,6 @@ public class KDTree {
 	}
 	
 	/**
-	 * 
 	 * 
 	 * @param curr   the current recordNode we are at, for the sake of recursion
 	 * @param r		 the recordNode which we are trying to find the level of
