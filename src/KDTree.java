@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * This is the KDTree class, which will effectively function as a 3D tree for the sake of this project. 
@@ -27,6 +28,7 @@ public class KDTree {
 	/**
 	 * Calls printHelper, which then prints out the nodes of the tree in preorder traversal
 	 * Mainly used as a personal test method to see if the output is correct
+	 * 
 	 */
 	public void printTree() {
 		printHelper(root);
@@ -36,6 +38,7 @@ public class KDTree {
 	 * The printHelper method recursively prints out the nodes of the tree in preorder traversal
 	 * Printed in the format "[PARENT mobile ID] LCHILD/RCHILD [CHILD mobile ID]" for all children
 	 * If the current node does not have children, then it does not get printed.
+	 * Again, this is mainly used as a personal test method to see if the output is correct
 	 * 
 	 * @param curr	the current recordNode we are at, for the sake of recursion
 	 */
@@ -58,47 +61,92 @@ public class KDTree {
 	}
 	
 	/**
-	 * @param filePath
+	 * This private method will be used to help with writing output to the CSV files.
+	 * It will do a preorder traversal of the tree to get all the nodes (and their children), and add them to an ArrayList in the desired format for output.
+	 * That is, each element of the ArrayList will be a String like "[PARENT mobile ID] LCHILD/RCHILD [CHILD mobile ID]".
+	 * 
+	 * @return An ArrayList containing all the nodes in the tree in preorder, according to the desired output format
+	 */
+	private ArrayList<String> allNodesPreOrder() {
+		ArrayList<String> allNodes = new ArrayList<String>();
+		allNodesPreOrderHelper(root, allNodes);
+		
+		return allNodes;
+	}
+	
+	/**
+	 * Recursive helper method for allNodesPreOrder, which actually does all the necessary work.
+	 * 
+	 * @param curr      the current recordNode we are at, for the sake of recursion
+	 * @param allNodes  the ArrayList to which we will add all the output strings
+	 */
+	private void allNodesPreOrderHelper(recordNode curr, ArrayList<String> allNodes) {
+		if (curr == null)
+			return;
+		if (curr.getLeft() != null)
+			allNodes.add(curr.getPhoneID() + " LCHILD " + curr.getLeft().getPhoneID());
+		if (curr.getRight() != null)
+			allNodes.add(curr.getPhoneID() + " RCHILD " + curr.getRight().getPhoneID());
+		
+		allNodesPreOrderHelper(curr.getLeft(), allNodes);
+		allNodesPreOrderHelper(curr.getRight(), allNodes);
+	}
+	
+	/**
+	 * This method will write all the nodes of the tree to an output file, according to the format specified in the project description.
+	 * That is, each line will follow the format: "[PARENT mobile ID] LCHILD/RCHILD [CHILD mobile ID]" in preorder traversal style.
+	 * 
+	 * @param filePath   A string containing the file path of the output file, which we are writing to
 	 */
 	public void writeToFile(String filePath) {
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-			writeToFileHelper(root, writer);
+			
+			ArrayList<String> allNodesPreOrder = allNodesPreOrder();
+			
+			for (int i = 0; i < allNodesPreOrder.size(); i++) {
+				writer.append(allNodesPreOrder.get(i));
+				
+				// making sure that we don't have an extra newline at the end of the file
+				if (i < allNodesPreOrder.size() - 1)
+					writer.append("\n");
+			}
+			
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	/**
-	 * @param curr
-	 * @param writer
-	 */
-	private void writeToFileHelper(recordNode curr, BufferedWriter writer) {
-		if (curr == null)
-			return;
-		
-		if (curr.getLeft() != null) {
-			try {
-				writer.append(curr.getPhoneID() + " LCHILD " + curr.getLeft().getPhoneID());
-				writer.append("\n");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		if (curr.getRight() != null) {
-			try {
-				writer.append(curr.getPhoneID() + " RCHILD " + curr.getRight().getPhoneID());
-				writer.append("\n");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		writeToFileHelper(curr.getLeft(), writer);
-		writeToFileHelper(curr.getRight(), writer);
-	}
+//	/**
+//	 * @param curr
+//	 * @param writer
+//	 */
+//	private void writeToFileHelper(recordNode curr, BufferedWriter writer) {
+//		if (curr == null)
+//			return;
+//		
+//		if (curr.getLeft() != null) {
+//			try {
+//				writer.append(curr.getPhoneID() + " LCHILD " + curr.getLeft().getPhoneID());
+//				writer.append("\n");
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//		
+//		if (curr.getRight() != null) {
+//			try {
+//				writer.append(curr.getPhoneID() + " RCHILD " + curr.getRight().getPhoneID());
+//				writer.append("\n");
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//		
+//		writeToFileHelper(curr.getLeft(), writer);
+//		writeToFileHelper(curr.getRight(), writer);
+//	}
 	
 	/**
 	 * Insert function
@@ -235,6 +283,7 @@ public class KDTree {
 	}
 	
 	/**
+	 * Helper method for getLevel that actually does all the work.
 	 * 
 	 * @param curr   the current recordNode we are at, for the sake of recursion
 	 * @param r		 the recordNode which we are trying to find the level of
