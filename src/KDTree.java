@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is the KDTree class, which will effectively function as a 3D tree for the sake of this project. 
@@ -113,6 +114,7 @@ public class KDTree {
 			}
 			
 			writer.close();
+			System.out.println("Done writing!");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -269,6 +271,78 @@ public class KDTree {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param triangleFile
+	 */
+	public void processTriangleQueries(String triangleFile) {
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(triangleFile));
+			String currLine = "";
+			
+			while ((currLine = br.readLine()) != null) {
+				String triangleQuery[] = currLine.split(",");
+				
+				int time = Integer.parseInt(triangleQuery[0].trim());
+				int x1 = Integer.parseInt(triangleQuery[1].trim());
+				int y1 = Integer.parseInt(triangleQuery[2].trim());
+				int x2 = Integer.parseInt(triangleQuery[3].trim());
+				int y2 = Integer.parseInt(triangleQuery[4].trim());
+				int x3 = Integer.parseInt(triangleQuery[5].trim());
+				int y3 = Integer.parseInt(triangleQuery[6].trim());
+				
+				List<Long> mobileIDs = triangle(time, x1, y1, x2, y2, x3, y3);
+				
+				
+			}
+			
+			br.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param time
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @param x3
+	 * @param y3
+	 * @return
+	 */
+	public List<Long> triangle(int time, int x1, int y1, int x2, int y2, int x3, int y3) {
+		List<Long> mobileIDs = new ArrayList<Long>();
+		triangleHelper(root, mobileIDs, time, x1, y1, x2, y2, x3, y3);
+		
+		return mobileIDs;
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param r
+	 * @param list
+	 * @param time
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @param x3
+	 * @param y3
+	 */
+	private void triangleHelper(recordNode r, List<Long> list, int time, int x1, int y1, int x2, int y2, int x3, int y3) {
+		if(r.getTime() == time) {
+			
 		}
 	}
 	
