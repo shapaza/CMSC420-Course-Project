@@ -283,6 +283,7 @@ public class KDTree {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(triangleFile));
 			String currLine = "";
+			ArrayList<List<Long>> outputLines = new ArrayList<List<Long>>();
 			
 			while ((currLine = br.readLine()) != null) {
 				String triangleQuery[] = currLine.split(",");
@@ -296,8 +297,7 @@ public class KDTree {
 				int y3 = Integer.parseInt(triangleQuery[6].trim());
 				
 				List<Long> mobileIDs = triangle(time, x1, y1, x2, y2, x3, y3);
-				
-				
+				outputLines.add(mobileIDs);
 			}
 			
 			br.close();
@@ -342,8 +342,34 @@ public class KDTree {
 	 */
 	private void triangleHelper(recordNode r, List<Long> list, int time, int x1, int y1, int x2, int y2, int x3, int y3) {
 		if(r.getTime() == time) {
-			
+			 Double wholeArea = area(x1, y1, x2, y2, x3, y3);
+			 Double triangleArea1 = area(r.getXloc(), r.getYloc(), x2, y2, x3, y3);
+			 Double triangleArea2 = area(x1, y1, r.getXloc(), r.getYloc(), x3, y3);
+			 Double triangleArea3 = area(x1, y1, x2, y2, r.getXloc(), r.getYloc());
+			 Double resultingArea = triangleArea1 + triangleArea2 + triangleArea3;
+			 
+			 if (Math.abs(wholeArea - resultingArea) <= 0.000001 ) {
+				 list.add(r.getPhoneID());
+			 }
 		}
+		
+		triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3);
+		triangleHelper(r.getRight(), list, time, x1, y1, x2, y2, x3, y3);
+	}
+	
+	/**
+	 * 
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @param x3
+	 * @param y3
+	 * @return
+	 */
+	private Double area(int x1, int y1, int x2, int y2, int x3, int y3) {
+		// formula for the area of any triangle made of up three vertices (x1, y1), (x2, y2), and (x3, y3)
+		return Math.abs(0.5 * (x1*(y2-y3) + x2*(y3-y1)+ x3*(y1-y2)));
 	}
 	
 	/**
