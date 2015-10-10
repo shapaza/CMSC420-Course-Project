@@ -342,11 +342,11 @@ public class KDTree {
 	 */
 	private void triangleHelper(recordNode r, List<Long> list, int time, int x1, int y1, int x2, int y2, int x3, int y3) {
 		if(r.getTime() == time) {
-			 Double wholeArea = area(x1, y1, x2, y2, x3, y3);
-			 Double triangleArea1 = area(r.getXloc(), r.getYloc(), x2, y2, x3, y3);
-			 Double triangleArea2 = area(x1, y1, r.getXloc(), r.getYloc(), x3, y3);
-			 Double triangleArea3 = area(x1, y1, x2, y2, r.getXloc(), r.getYloc());
-			 Double resultingArea = triangleArea1 + triangleArea2 + triangleArea3;
+			 double wholeArea = area(x1, y1, x2, y2, x3, y3);
+			 double triangleArea1 = area(r.getXloc(), r.getYloc(), x2, y2, x3, y3);
+			 double triangleArea2 = area(x1, y1, r.getXloc(), r.getYloc(), x3, y3);
+			 double triangleArea3 = area(x1, y1, x2, y2, r.getXloc(), r.getYloc());
+			 double resultingArea = triangleArea1 + triangleArea2 + triangleArea3;
 			 
 			 if (Math.abs(wholeArea - resultingArea) <= 0.000001 ) {
 				 list.add(r.getPhoneID());
@@ -367,7 +367,7 @@ public class KDTree {
 	 * @param y3
 	 * @return
 	 */
-	private Double area(int x1, int y1, int x2, int y2, int x3, int y3) {
+	private double area(int x1, int y1, int x2, int y2, int x3, int y3) {
 		// formula for the area of any triangle made of up three vertices (x1, y1), (x2, y2), and (x3, y3)
 		return Math.abs(0.5 * (x1*(y2-y3) + x2*(y3-y1)+ x3*(y1-y2)));
 	}
