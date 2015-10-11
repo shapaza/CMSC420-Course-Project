@@ -278,12 +278,14 @@ public class KDTree {
 	 * 
 	 * 
 	 * @param triangleFile
+	 * @return 
 	 */
-	public void processTriangleQueries(String triangleFile) {
+	public ArrayList<List<Long>> processTriangleQueries(String triangleFile) {
+		ArrayList<List<Long>> outputLines = new ArrayList<List<Long>>();
+		
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(triangleFile));
-			String currLine = "";
-			ArrayList<List<Long>> outputLines = new ArrayList<List<Long>>();
+			String currLine = "";	
 			
 			while ((currLine = br.readLine()) != null) {
 				String triangleQuery[] = currLine.split(",");
@@ -306,6 +308,30 @@ public class KDTree {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		return outputLines;
+	}
+	
+	/**
+	 * 
+	 * @param filePath
+	 */
+	public void writeToTriangleOutput(String filePath, ArrayList<List<Long>> mobileIDs) {	
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+			
+			for (int i = 0; i < mobileIDs.size(); i++) {
+				for (int j = 0; j < mobileIDs.get(i).size(); j++) {
+					writer.append(mobileIDs.get(i).get(j).toString() + ", ");
+				}
+				writer.append("\n");
+			}
+			
+			writer.close();
+			System.out.println("Done writing!");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -318,7 +344,7 @@ public class KDTree {
 	 * @param y2
 	 * @param x3
 	 * @param y3
-	 * @return
+	 * @return a list of mobileIDs that correspond to recordNodes that intersect a triangle query region
 	 */
 	public List<Long> triangle(int time, int x1, int y1, int x2, int y2, int x3, int y3) {
 		List<Long> mobileIDs = new ArrayList<Long>();
@@ -341,6 +367,9 @@ public class KDTree {
 	 * @param y3
 	 */
 	private void triangleHelper(recordNode r, List<Long> list, int time, int x1, int y1, int x2, int y2, int x3, int y3) {
+		if (r == null)
+			return;
+		
 		if(r.getTime() == time) {
 			 double wholeArea = area(x1, y1, x2, y2, x3, y3);
 			 double triangleArea1 = area(r.getXloc(), r.getYloc(), x2, y2, x3, y3);
@@ -358,6 +387,8 @@ public class KDTree {
 	}
 	
 	/**
+	 * This method is used for calculating the area of a triangle, represented by three vertices:
+	 * (x1, y1), (x2, y2), and (x3, y3)
 	 * 
 	 * @param x1
 	 * @param y1
@@ -365,7 +396,7 @@ public class KDTree {
 	 * @param y2
 	 * @param x3
 	 * @param y3
-	 * @return
+	 * @return a double representing the area of the triangle represented by the vertices (x1, y1), (x2, y2), and (x3, y3)
 	 */
 	private double area(int x1, int y1, int x2, int y2, int x3, int y3) {
 		// formula for the area of any triangle made of up three vertices (x1, y1), (x2, y2), and (x3, y3)
