@@ -275,10 +275,11 @@ public class KDTree {
 	}
 	
 	/**
-	 * 
+	 * This method processes the data contained in a file containing triangle queries, and returns a list of lists of longs containing the mobileIDs that are contained within
+	 * the triangle query region.
 	 * 
 	 * @param triangleFile
-	 * @return 
+	 * @return An ArrayList of Lists of Longs, corresponding to the mobileIDs that are contained in the triangle query regions
 	 */
 	public ArrayList<List<Long>> processTriangleQueries(String triangleFile) {
 		ArrayList<List<Long>> outputLines = new ArrayList<List<Long>>();
@@ -313,8 +314,10 @@ public class KDTree {
 	}
 	
 	/**
+	 * This method writes the mobileIDs found by the triangle method to an output file, as specified in the project description.
 	 * 
 	 * @param filePath
+	 * @param mobileIDs
 	 */
 	public void writeToTriangleOutput(String filePath, ArrayList<List<Long>> mobileIDs) {	
 		try {
@@ -335,7 +338,8 @@ public class KDTree {
 	}
 	
 	/**
-	 * 
+	 * This method takes in a triangle query region represented by vertices (x1, y1), (x2, y2), and (x3, y3)
+	 * and a time value. It will return a list of mobileIDs that are within the triangle at the specified time value. 
 	 * 
 	 * @param time
 	 * @param x1
@@ -354,7 +358,12 @@ public class KDTree {
 	}
 	
 	/**
-	 * 
+	 * This is a helper method to the above "triangle" method that actually does all the work.
+	 * To determine whether any particular mobileID lies inside the triangle query region, this method calculates the area of the triangle query region represented by vertices
+	 * (x1, y1), (x2, y2), and (x3, y3), which I will refer to as points A, B, and C, respectively. I will also refer to the point in the current node as R.
+	 * The method then calculates the area of triangles RAB, RBC, and RAC (not necessarily in the order listed here), and adds them up. 
+	 * If the sum of these areas equals the area of the the triangle query region, then that means the point lies inside 
+	 * the triangle query region, and the method adds the corresponding mobileID to the list. 
 	 * 
 	 * @param r
 	 * @param list
