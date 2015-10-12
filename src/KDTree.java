@@ -17,6 +17,12 @@ import java.util.List;
 public class KDTree {
 	
 	private recordNode root;
+	private static final int XLOC_MIN = 0;
+	private static final int XLOC_MAX = 1023;
+	private static final int YLOC_MIN = 0;
+	private static final int YLOC_MAX = 1023;
+	private static final int TIME_MIN = 0;
+	private static final int TIME_MAX = 1023;
 	
 	/**
 	 * Constructor
@@ -352,7 +358,7 @@ public class KDTree {
 	 */
 	public List<Long> triangle(int time, int x1, int y1, int x2, int y2, int x3, int y3) {
 		List<Long> mobileIDs = new ArrayList<Long>();
-		triangleHelper(root, mobileIDs, time, x1, y1, x2, y2, x3, y3);
+		triangleHelper(root, mobileIDs, time, x1, y1, x2, y2, x3, y3, XLOC_MIN, XLOC_MAX, YLOC_MIN, YLOC_MAX, TIME_MIN, TIME_MAX);
 		
 		return mobileIDs;
 	}
@@ -365,46 +371,77 @@ public class KDTree {
 	 * If the sum of these areas equals the area of the the triangle query region, then that means the point lies inside 
 	 * the triangle query region, and the method adds the corresponding mobileID to the list. 
 	 * 
-	 * @param r
-	 * @param list
-	 * @param time
-	 * @param x1
-	 * @param y1
-	 * @param x2
-	 * @param y2
-	 * @param x3
-	 * @param y3
+	 * @param r			the current recordNode we are at
+	 * @param list		the list of Longs that we are adding mobileIDs to (if they lie within the triangle query region)
+	 * @param time		the specified time at which mobileIDs must be
+	 * @param x1		the x-coordinate of the first vertex of the triangle query region
+	 * @param y1		the y-coordinate of the first vertex of the triangle query region
+	 * @param x2		the x-coordinate of the second vertex of the triangle query region
+	 * @param y2		the y-coordinate of the second vertex of the triangle query region
+	 * @param x3		the x-coordinate of the third vertex of the triangle query region
+	 * @param y3		the y-coordinate of the third vertex of the triangle query region
+	 * @param xMin		
+	 * @param xMax
+	 * @param yMin
+	 * @param yMax
+	 * @param timeMin
+	 * @param timeMax
 	 */
-	private void triangleHelper(recordNode r, List<Long> list, int time, int x1, int y1, int x2, int y2, int x3, int y3) {
+	private void triangleHelper(recordNode r, List<Long> list, int time,
+			int x1, int y1, int x2, int y2, int x3, int y3, int xMin, int xMax,
+			int yMin, int yMax, int timeMin, int timeMax) {
 		if (r == null)
 			return;
-		
-		if(r.getTime() == time) {
-			 double wholeArea = area(x1, y1, x2, y2, x3, y3);
-			 double triangleArea1 = area(r.getXloc(), r.getYloc(), x2, y2, x3, y3);
-			 double triangleArea2 = area(x1, y1, r.getXloc(), r.getYloc(), x3, y3);
-			 double triangleArea3 = area(x1, y1, x2, y2, r.getXloc(), r.getYloc());
-			 double resultingArea = triangleArea1 + triangleArea2 + triangleArea3;
-			 
-			 if (Math.abs(wholeArea - resultingArea) <= 0.000001 ) {
-				 list.add(r.getPhoneID());
-			 }
+
+		if (r.getTime() == time) {
+			double wholeArea = area(x1, y1, x2, y2, x3, y3);
+			double triangleArea1 = area(r.getXloc(), r.getYloc(), x2, y2, x3,
+					y3);
+			double triangleArea2 = area(x1, y1, r.getXloc(), r.getYloc(), x3,
+					y3);
+			double triangleArea3 = area(x1, y1, x2, y2, r.getXloc(),
+					r.getYloc());
+			double resultingArea = triangleArea1 + triangleArea2
+					+ triangleArea3;
+
+			if (Math.abs(wholeArea - resultingArea) <= 0.000001) {
+				list.add(r.getPhoneID());
+			}
 		}
 		
-		triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3);
-		triangleHelper(r.getRight(), list, time, x1, y1, x2, y2, x3, y3);
+		int discriminator = getLevel(r) % 3;
+		
+		if (discriminator == 0) {
+			triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3, 
+					xMin, r.getXloc() - 1, yMin, yMax, timeMin, timeMax);
+			triangleHelper(r.getRight(), list, time, x1, y1, x2, y2, x3, y3, 
+					r.getXloc(), xMax, yMin, yMax, timeMin, timeMax);
+		}
+		else if (discriminator == 1) {
+			triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3, 
+					xMin, xMax, yMin, r.getYloc() - 1, timeMin, timeMax);
+			triangleHelper(r.getRight(), list, time, x1, y1, x2, y2, x3, y3, 
+					xMin, xMax, r.getYloc(), yMax, timeMin, timeMax);
+		}
+		else if (discriminator == 2) {
+			triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3, 
+					xMin, xMax, yMin, yMax, timeMin, r.getTime() - 1);
+			triangleHelper(r.getRight(), list, time, x1, y1, x2, y2, x3, y3, 
+					xMin, xMax, yMin, yMax, r.getTime(), timeMax);
+		}
 	}
 	
 	/**
 	 * This method is used for calculating the area of a triangle, represented by three vertices:
 	 * (x1, y1), (x2, y2), and (x3, y3)
 	 * 
-	 * @param x1
-	 * @param y1
-	 * @param x2
-	 * @param y2
-	 * @param x3
-	 * @param y3
+	 * @param x1	the x-coordinate of the first vertex of the triangle query region
+	 * @param y1	the y-coordinate of the first vertex of the triangle query region
+	 * @param x2	the x-coordinate of the second vertex of the triangle query region
+	 * @param y2	the y-coordinate of the second vertex of the triangle query region
+	 * @param x3	the x-coordinate of the third vertex of the triangle query region
+	 * @param y3	the y-coordinate of the third vertex of the triangle query region
+	 * 
 	 * @return a double representing the area of the triangle represented by the vertices (x1, y1), (x2, y2), and (x3, y3)
 	 */
 	private double area(int x1, int y1, int x2, int y2, int x3, int y3) {
