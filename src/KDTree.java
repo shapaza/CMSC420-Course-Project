@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.awt.geom.Line2D;
 
 /**
  * This is the KDTree class, which will effectively function as a 3D tree for the sake of this project. 
@@ -120,7 +121,7 @@ public class KDTree {
 			}
 			
 			writer.close();
-			System.out.println("Done writing!");
+			System.out.println("Done writing Task 1 Output!");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -333,11 +334,13 @@ public class KDTree {
 				for (int j = 0; j < mobileIDs.get(i).size(); j++) {
 					writer.append(mobileIDs.get(i).get(j).toString() + ", ");
 				}
-				writer.append("\n");
+				
+				if (i < mobileIDs.size() - 1)
+					writer.append("\n");
 			}
 			
 			writer.close();
-			System.out.println("Done writing!");
+			System.out.println("Done writing Task 2 Output!");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -380,30 +383,38 @@ public class KDTree {
 	 * @param y2		the y-coordinate of the second vertex of the triangle query region
 	 * @param x3		the x-coordinate of the third vertex of the triangle query region
 	 * @param y3		the y-coordinate of the third vertex of the triangle query region
-	 * @param xMin		
-	 * @param xMax
-	 * @param yMin
-	 * @param yMax
-	 * @param timeMin
-	 * @param timeMax
+	 * @param xMin		the minimum possible x value of the current region
+	 * @param xMax		the maximum possible x value of the current region
+	 * @param yMin		the minimum possible y value of the current region
+	 * @param yMax		the maximum possible y value of the current region
+	 * @param timeMin	the minimum possible time value of the current region
+	 * @param timeMax	the maximum possible time value of the current region
 	 */
 	private void triangleHelper(recordNode r, List<Long> list, int time,
 			int x1, int y1, int x2, int y2, int x3, int y3, int xMin, int xMax,
 			int yMin, int yMax, int timeMin, int timeMax) {
 		if (r == null)
 			return;
-
+		
+		// if the time is not within bounds
+		if (time < timeMin || time > timeMax) {
+			// System.out.println("Pruning at Node " + r.getPhoneID() + " based on time");
+			return; // prune
+		}
+		// if the triangle query region does not intersect the current node's rectangular region
+		if(!intersects(x1, y1, x2, y2, x3, y3, xMin, xMax, yMin, yMax)) {
+			// System.out.println("Pruning at Node " + r.getPhoneID() + " based on lack of intersection");
+			return; // prune
+		}
+		// if the time of the current node matches the time specified
 		if (r.getTime() == time) {
-			double wholeArea = area(x1, y1, x2, y2, x3, y3);
-			double triangleArea1 = area(r.getXloc(), r.getYloc(), x2, y2, x3,
-					y3);
-			double triangleArea2 = area(x1, y1, r.getXloc(), r.getYloc(), x3,
-					y3);
-			double triangleArea3 = area(x1, y1, x2, y2, r.getXloc(),
-					r.getYloc());
-			double resultingArea = triangleArea1 + triangleArea2
-					+ triangleArea3;
+			double wholeArea = triangleArea(x1, y1, x2, y2, x3, y3);
+			double triangleArea1 = triangleArea(r.getXloc(), r.getYloc(), x2, y2, x3, y3);
+			double triangleArea2 = triangleArea(x1, y1, r.getXloc(), r.getYloc(), x3, y3);
+			double triangleArea3 = triangleArea(x1, y1, x2, y2, r.getXloc(), r.getYloc());
+			double resultingArea = triangleArea1 + triangleArea2 + triangleArea3;
 
+			// if the point is within the triangle query region, add it to the list of solutions
 			if (Math.abs(wholeArea - resultingArea) <= 0.000001) {
 				list.add(r.getPhoneID());
 			}
@@ -411,18 +422,21 @@ public class KDTree {
 		
 		int discriminator = getLevel(r) % 3;
 		
+		// if we're discriminating on the X value, update xMin and xMax values for recursive calls
 		if (discriminator == 0) {
 			triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3, 
 					xMin, r.getXloc() - 1, yMin, yMax, timeMin, timeMax);
 			triangleHelper(r.getRight(), list, time, x1, y1, x2, y2, x3, y3, 
 					r.getXloc(), xMax, yMin, yMax, timeMin, timeMax);
 		}
+		// if we're discriminating on the Y value, update yMin and yMax values for recursive calls
 		else if (discriminator == 1) {
 			triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3, 
 					xMin, xMax, yMin, r.getYloc() - 1, timeMin, timeMax);
 			triangleHelper(r.getRight(), list, time, x1, y1, x2, y2, x3, y3, 
 					xMin, xMax, r.getYloc(), yMax, timeMin, timeMax);
 		}
+		// if we're discriminating on the time value, update timeMin and timeMax values for recursive calls
 		else if (discriminator == 2) {
 			triangleHelper(r.getLeft(), list, time, x1, y1, x2, y2, x3, y3, 
 					xMin, xMax, yMin, yMax, timeMin, r.getTime() - 1);
@@ -444,15 +458,82 @@ public class KDTree {
 	 * 
 	 * @return a double representing the area of the triangle represented by the vertices (x1, y1), (x2, y2), and (x3, y3)
 	 */
-	private double area(int x1, int y1, int x2, int y2, int x3, int y3) {
+	private double triangleArea(int x1, int y1, int x2, int y2, int x3, int y3) {
 		// formula for the area of any triangle made of up three vertices (x1, y1), (x2, y2), and (x3, y3)
 		return Math.abs(0.5 * (x1*(y2-y3) + x2*(y3-y1)+ x3*(y1-y2)));
+	}
+	
+	/**
+	 * This method checks if the triangle represented by vertices (x1, y1), (x2, y2), and (x3, y3)
+	 * intersects with the rectangle region represented by the points (xMin, yMin), (xMin, yMax), (xMax, yMax), and (xMax, yMin).
+	 * 
+	 * @param x1		the x-coordinate of the first vertex of the triangle query region
+	 * @param y1		the y-coordinate of the first vertex of the triangle query region
+	 * @param x2		the x-coordinate of the second vertex of the triangle query region
+	 * @param y2		the y-coordinate of the second vertex of the triangle query region
+	 * @param x3		the x-coordinate of the third vertex of the triangle query region
+	 * @param y3		the y-coordinate of the third vertex of the triangle query region
+	 * @param xMin		the minimum possible x value of the current region
+	 * @param xMax		the maximum possible x value of the current region
+	 * @param yMin		the minimum possible y value of the current region
+	 * @param yMax		the maximum possible y value of the current region
+	 * 
+	 * @return a boolean indicating whether the triangle intersects with the rectangular region
+	 */
+	private boolean intersects(int x1, int y1, int x2, int y2, int x3, int y3,
+			int xMin, int xMax, int yMin, int yMax) {
+		// line segments for triangle query region
+		Line2D triLine1 = new Line2D.Double(x1, x2, y1, y2); // triangle line segment from (x1, y1) to (x2, y2)
+		Line2D triLine2 = new Line2D.Double(x1, x3, y1, y3); // triangle line segment from (x1, y1) to (x3, y3)
+		Line2D triLine3 = new Line2D.Double(x2, x3, y2, y3); // triangle line segment from (x2, y2) to (x3, y3)
+		
+		// line segments for rectangle region of node
+		// 4 points: A: (xMin, yMin), B: (xMin, yMax), C: (xMax, yMax), D: (xMax, yMin)
+		Line2D rectLine1 = new Line2D.Double(xMin, xMin, yMin, yMax); // rectangle line segment from (xMin, yMin) to (xMin, yMax)
+		Line2D rectLine2 = new Line2D.Double(xMin, xMax, yMax, yMax); // rectangle line segment from (xMin, yMax) to (xMax, yMax)
+		Line2D rectLine3 = new Line2D.Double(xMax, xMax, yMax, yMin); // rectangle line segment from (xMax, yMax) to (xMax, yMin)
+		Line2D rectLine4 = new Line2D.Double(xMax, xMin, yMin, yMin); // rectangle line segment from (xMax, yMin) to (xMin, yMin)
+		
+		double wholeArea = triangleArea(x1, y1, x2, y2, x3, y3);
+		double triangleArea1 = triangleArea(xMin, yMin, x2, y2, x3, y3);
+		double triangleArea2 = triangleArea(x1, y1, xMin, yMin, x3, y3);
+		double triangleArea3 = triangleArea(x1, y1, x2, y2, xMin, yMin);
+		double resultingArea = triangleArea1 + triangleArea2 + triangleArea3;
+
+		// if the rectangle is wholly contained inside the triangle query region
+		if (Math.abs(wholeArea - resultingArea) <= 0.000001)
+			return true;
+		
+		double wholeRecArea = Math.abs(xMax - xMin) * Math.abs(yMax - yMin);
+		double area1 = triangleArea(xMin, yMin, x1, y1, xMax, yMin);
+		double area2 = triangleArea(xMax, yMin, x1, y1, xMax, yMax);
+		double area3 = triangleArea(xMax, yMax, x1, y1, xMin, yMax);
+		double area4 = triangleArea(x1, y1, xMin, yMax, xMin, yMin);
+		double result = area1+ area2 + area3 + area4;
+		
+		// if triangle is wholly contained inside the rectangle region
+		if (Math.abs(wholeRecArea - result) <= 0.000001)
+			return true;
+		
+		// if any of the triangle's line segments intersects with the rectangular region
+		if (triLine1.intersectsLine(rectLine1) || triLine1.intersectsLine(rectLine2)
+		 || triLine1.intersectsLine(rectLine3) || triLine1.intersectsLine(rectLine4))
+			return true;
+		if (triLine2.intersectsLine(rectLine1) || triLine2.intersectsLine(rectLine2)
+		 || triLine2.intersectsLine(rectLine3) || triLine2.intersectsLine(rectLine4))
+			return true;
+		if (triLine3.intersectsLine(rectLine1) || triLine3.intersectsLine(rectLine2)
+		 || triLine3.intersectsLine(rectLine3) || triLine3.intersectsLine(rectLine4))
+			return true;
+		
+		return false;
 	}
 	
 	/**
 	 * The getLevel method calls getLevelHelper to return the level of recordNode r
 	 * 
 	 * @param r	  the recordNode which we are trying to find the level of
+	 * 
 	 * @return an integer representing the level of recordNode r in the current tree or -1 if it's not in the tree
 	 */
 	public int getLevel(recordNode r) {
@@ -465,6 +546,7 @@ public class KDTree {
 	 * @param curr   the current recordNode we are at, for the sake of recursion
 	 * @param r		 the recordNode which we are trying to find the level of
 	 * @param level  the int representing the current level we are at, which we will return if we find recordNode r
+	 * 
 	 * @return an integer representing the level of recordNode r in the current tree or -1 if it's not in the tree
 	 */
 	private int getLevelHelper(recordNode curr, recordNode r, int level) {
