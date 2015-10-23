@@ -10,6 +10,8 @@ public class Runner {
 		String outputFileName = "output1";
 		String triangleInputFileName = "triangle";
 		String triangleOutputFileName = "output2";
+		String timeIntInput = "time_int";
+		String timeIntOutput = "output3";
 		
 		KDTree MyTree = new KDTree();
 		
@@ -20,6 +22,7 @@ public class Runner {
 		// Task 2
 		ArrayList<List<Long>> triangleMobileIDs = MyTree.processTriangleQueries(triangleInputFileName);
 		MyTree.writeToTriangleOutput(triangleOutputFileName, triangleMobileIDs);
+		
+		// Task 3
 	}
-
 }

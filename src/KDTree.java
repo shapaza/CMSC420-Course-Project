@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.geom.Line2D;
+import java.awt.geom.Line2D.Double;
 
 /**
  * This is the KDTree class, which will effectively function as a 3D tree for the sake of this project. 
@@ -527,6 +528,81 @@ public class KDTree {
 			return true;
 		
 		return false;
+	}
+	
+	/**
+	 * @param timeIntFile
+	 * @return
+	 */
+	public ArrayList<List<Long>> processTimeIntQueries(String timeIntFile) {
+		ArrayList<List<Long>> outputLines = new ArrayList<List<Long>>();
+		
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(timeIntFile));
+			String currLine = "";	
+			
+			while ((currLine = br.readLine()) != null) {
+				String[] timeIntQuery = currLine.split(",");
+				
+				int startTime = Integer.parseInt(timeIntQuery[0].trim());
+				int endTime = Integer.parseInt(timeIntQuery[1].trim());
+				int x1 = Integer.parseInt(timeIntQuery[2].trim());
+				int y1 = Integer.parseInt(timeIntQuery[3].trim());
+				int x2 = Integer.parseInt(timeIntQuery[4].trim());
+				int y2 = Integer.parseInt(timeIntQuery[5].trim());
+				
+				List<Long> mobileIDs = timeInt(startTime, endTime, x1, y1, x2, y2);
+				outputLines.add(mobileIDs);
+			}
+			
+			br.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return outputLines;
+	}
+	
+	/**
+	 * @param start
+	 * @param end
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return
+	 */
+	public List<Long> timeInt(int start, int end, int x1, int y1, int x2, int y2) {
+		List<Long> mobileIDs = new ArrayList<Long>();
+		Line2D left = new Line2D.Double(x1, x1, y1, y2);    // line going from (x1, y1) to (x1, y2)
+		Line2D top = new Line2D.Double(x1, x2, y2, y2);     // line going from (x1, y2) to (x2, y2)
+		Line2D right = new Line2D.Double(x2, x2, y2, y1);   // line going from (x2, y2) to (x2, y1)
+		Line2D bottom = new Line2D.Double(x2, x1, y1, y1);  // line going from (x2, y1) to (x1, y1)
+		
+		timeIntHelper(root, mobileIDs, start, end, left, top, right, bottom);
+		
+		return mobileIDs;
+	}
+	
+	/**
+	 * @param r
+	 * @param list
+	 * @param start
+	 * @param end
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 */
+	private void timeIntHelper(recordNode r,  List<Long> list, int start, int end, Line2D left, Line2D top, Line2D right, Line2D bottom) {
+		if (r == null)
+			return;
+		
+		if (start <= r.getTime() && r.getTime() <= end) {
+			
+		}
 	}
 	
 	/**
