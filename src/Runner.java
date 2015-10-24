@@ -18,11 +18,16 @@ public class Runner {
 		// Task 1
 		MyTree.insertFile(workingDir + inputFileName);
 		MyTree.writeToFile(outputFileName);
+		System.out.println("Done with Task 1!");
 		
 		// Task 2
 		ArrayList<List<Long>> triangleMobileIDs = MyTree.processTriangleQueries(triangleInputFileName);
 		MyTree.writeToTriangleOutput(triangleOutputFileName, triangleMobileIDs);
+		System.out.println("Done with Task 2!");
 		
 		// Task 3
+		ArrayList<List<Long>> timeIntMobileIDs = MyTree.processTimeIntQueries(timeIntInput);
+		MyTree.writeToTriangleOutput(timeIntOutput, timeIntMobileIDs);
+		System.out.println("Done with Task 3!");
 	}
 }

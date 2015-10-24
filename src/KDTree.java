@@ -122,7 +122,6 @@ public class KDTree {
 			}
 			
 			writer.close();
-			System.out.println("Done writing Task 1 Output!");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -341,7 +340,6 @@ public class KDTree {
 			}
 			
 			writer.close();
-			System.out.println("Done writing Task 2 Output!");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -532,6 +530,7 @@ public class KDTree {
 	
 	/**
 	 * @param timeIntFile
+	 * 
 	 * @return
 	 */
 	public ArrayList<List<Long>> processTimeIntQueries(String timeIntFile) {
@@ -572,6 +571,7 @@ public class KDTree {
 	 * @param y1
 	 * @param x2
 	 * @param y2
+	 * 
 	 * @return
 	 */
 	public List<Long> timeInt(int start, int end, int x1, int y1, int x2, int y2) {
@@ -580,29 +580,41 @@ public class KDTree {
 		Line2D top = new Line2D.Double(x1, x2, y2, y2);     // line going from (x1, y2) to (x2, y2)
 		Line2D right = new Line2D.Double(x2, x2, y2, y1);   // line going from (x2, y2) to (x2, y1)
 		Line2D bottom = new Line2D.Double(x2, x1, y1, y1);  // line going from (x2, y1) to (x1, y1)
+		Rectangle queryRegion = new Rectangle(x1, y1, x2, y2, left, top, right, bottom);
 		
-		timeIntHelper(root, mobileIDs, start, end, left, top, right, bottom);
+		timeIntHelper(root, mobileIDs, start, end, queryRegion);
 		
 		return mobileIDs;
 	}
+	
 	
 	/**
 	 * @param r
 	 * @param list
 	 * @param start
 	 * @param end
-	 * @param x1
-	 * @param y1
-	 * @param x2
-	 * @param y2
+	 * @param qr
 	 */
-	private void timeIntHelper(recordNode r,  List<Long> list, int start, int end, Line2D left, Line2D top, Line2D right, Line2D bottom) {
+	private void timeIntHelper(recordNode r, List<Long> list, int start, int end, Rectangle qr) {
 		if (r == null)
 			return;
 		
+		// if the time is within the interval specified
 		if (start <= r.getTime() && r.getTime() <= end) {
+			double wholeRecArea = Math.abs(qr.getX2() - qr.getX1()) * Math.abs(qr.getY2() - qr.getY1());
+			double area1 = triangleArea(qr.getX1(), qr.getY1(), r.getXloc(), r.getYloc(), qr.getX2(), qr.getY1());
+			double area2 = triangleArea(qr.getX1(), qr.getY1(), r.getXloc(), r.getYloc(), qr.getX1(), qr.getY2());
+			double area3 = triangleArea(qr.getX1(), qr.getY2(), r.getXloc(), r.getYloc(), qr.getX2(), qr.getY2());
+			double area4 = triangleArea(qr.getX2(), qr.getY2(), r.getXloc(), r.getYloc(), qr.getX2(), qr.getY1());
+			double result = area1 + area2 + area3 + area4;
 			
+			// if the point lies within the rectangle query region
+			if (Math.abs(wholeRecArea - result) <= 0.000001)
+				list.add(r.getPhoneID());
 		}
+		
+		timeIntHelper(r.getLeft(), list, start, end, qr);
+		timeIntHelper(r.getRight(), list, start, end, qr);
 	}
 	
 	/**
