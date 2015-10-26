@@ -1,8 +1,32 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class Runner {
+	
+	public static void writeOutput(String filePath, ArrayList<List<Long>> mobileIDs) {	
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+			
+			for (int i = 0; i < mobileIDs.size(); i++) {
+				for (int j = 0; j < mobileIDs.get(i).size(); j++) {
+					writer.append(mobileIDs.get(i).get(j).toString() + ",");
+					
+					if (j < mobileIDs.get(i).size() - 1)
+						writer.append(" ");
+				}
+				
+				writer.append("\n");
+			}
+			
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void main(String[] args) {
 		String workingDir = System.getProperty("user.dir") + "\\";
@@ -27,7 +51,7 @@ public class Runner {
 		
 		// Task 3
 		ArrayList<List<Long>> timeIntMobileIDs = MyTree.processTimeIntQueries(timeIntInput);
-		MyTree.writeToTriangleOutput(timeIntOutput, timeIntMobileIDs);
+		writeOutput(timeIntOutput, timeIntMobileIDs); // method still works for timeInt task
 		System.out.println("Done with Task 3!");
 	}
 }

@@ -507,7 +507,7 @@ public class KDTree {
 		double area1 = triangleArea(xMin, yMin, x1, y1, xMax, yMin);
 		double area2 = triangleArea(xMax, yMin, x1, y1, xMax, yMax);
 		double area3 = triangleArea(xMax, yMax, x1, y1, xMin, yMax);
-		double area4 = triangleArea(x1, y1, xMin, yMax, xMin, yMin);
+		double area4 = triangleArea(xMin, yMax, x1, y1, xMin, yMin);
 		double result = area1+ area2 + area3 + area4;
 		
 		// if triangle is wholly contained inside the rectangle region
@@ -529,9 +529,11 @@ public class KDTree {
 	}
 	
 	/**
-	 * @param timeIntFile
+	 * This method processes the data contained in a file containing timeInt queries, and returns a list of lists of longs containing the mobileIDs that are contained within
+	 * the rectangle query region at some time point in the interval [S, E].
 	 * 
-	 * @return
+	 * @param timeIntFile
+	 * @return An ArrayList of Lists of Longs, corresponding to the mobileIDs that are contained in the rectangle query region at some time point in [S, E]
 	 */
 	public ArrayList<List<Long>> processTimeIntQueries(String timeIntFile) {
 		ArrayList<List<Long>> outputLines = new ArrayList<List<Long>>();
@@ -565,6 +567,10 @@ public class KDTree {
 	}
 	
 	/**
+	 * This method takes in a rectangle query region whose lower-left corner is represented by (x1, y1) and whose upper-right is represented by (x2, y2)
+	 * and a time interval [start, end]. 
+	 * It will return a list of mobileIDs that are within the rectangle at some point in the time interval. 
+	 * 
 	 * @param start
 	 * @param end
 	 * @param x1
@@ -572,7 +578,7 @@ public class KDTree {
 	 * @param x2
 	 * @param y2
 	 * 
-	 * @return
+	 * @return a list of mobileIDs that correspond to recordNodes that intersect the query region and time interval
 	 */
 	public List<Long> timeInt(int start, int end, int x1, int y1, int x2, int y2) {
 		List<Long> mobileIDs = new ArrayList<Long>();
@@ -582,22 +588,40 @@ public class KDTree {
 		Line2D bottom = new Line2D.Double(x2, x1, y1, y1);  // line going from (x2, y1) to (x1, y1)
 		Rectangle queryRegion = new Rectangle(x1, y1, x2, y2, left, top, right, bottom);
 		
-		timeIntHelper(root, mobileIDs, start, end, queryRegion);
+		timeIntHelper(root, mobileIDs, start, end, queryRegion, XLOC_MIN, XLOC_MAX, YLOC_MIN, YLOC_MAX, TIME_MIN, TIME_MAX);
 		
 		return mobileIDs;
 	}
 	
-	
 	/**
+	 * 
+	 * 
 	 * @param r
 	 * @param list
 	 * @param start
 	 * @param end
 	 * @param qr
+	 * @param xMin
+	 * @param xMax
+	 * @param yMin
+	 * @param yMax
+	 * @param timeMin
+	 * @param timeMax
 	 */
-	private void timeIntHelper(recordNode r, List<Long> list, int start, int end, Rectangle qr) {
+	private void timeIntHelper(recordNode r, List<Long> list, int start, int end, Rectangle qr, int xMin, int xMax, int yMin, int yMax, int timeMin, int timeMax) {
 		if (r == null)
 			return;
+		
+		// if the time intervals don't overlap
+		if (end < timeMin || start > timeMax) {
+			// System.out.println("Pruning at Node " + r.getPhoneID() + " based on time");
+			return; // pruning
+		}
+		// if the query region does not intersect with the node region
+		if (!qr.intersects(xMin, xMax, yMin, yMax)) {
+			// System.out.println("Pruning at Node " + r.getPhoneID() + " based on lack of intersection");
+			return; // pruning
+		}
 		
 		// if the time is within the interval specified
 		if (start <= r.getTime() && r.getTime() <= end) {
@@ -613,8 +637,23 @@ public class KDTree {
 				list.add(r.getPhoneID());
 		}
 		
-		timeIntHelper(r.getLeft(), list, start, end, qr);
-		timeIntHelper(r.getRight(), list, start, end, qr);
+		int discriminator = getLevel(r) % 3;
+		
+		// if we're discriminating on the X value, update xMin and xMax values for recursive calls
+		if (discriminator == 0 ) {
+			timeIntHelper(r.getLeft(), list, start, end, qr, xMin, r.getXloc() - 1, yMin, yMax, timeMin, timeMax);
+			timeIntHelper(r.getRight(), list, start, end, qr, r.getXloc(), xMax, yMin, yMax, timeMin, timeMax);
+		}
+		// if we're discriminating on the Y value, update yMin and yMax values for recursive calls
+		else if (discriminator == 1) {
+			timeIntHelper(r.getLeft(), list, start, end, qr, xMin, xMax, yMin, r.getYloc() - 1, timeMin, timeMax);
+			timeIntHelper(r.getRight(), list, start, end, qr, xMin, xMax, r.getYloc(), yMax, timeMin, timeMax);
+		}
+		// if we're discriminating on the time value, update timeMin and timeMax values for recursive calls
+		else if (discriminator == 2) {
+			timeIntHelper(r.getLeft(), list, start, end, qr, xMin, xMax, yMin, yMax, timeMin, r.getTime() - 1);
+			timeIntHelper(r.getRight(), list, start, end, qr, xMin, xMax, yMin, yMax, r.getTime(), timeMax);
+		}
 	}
 	
 	/**
