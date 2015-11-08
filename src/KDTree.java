@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.awt.geom.Line2D;
 import java.awt.geom.Line2D.Double;
@@ -571,12 +572,12 @@ public class KDTree {
 	 * and a time interval [start, end]. 
 	 * It will return a list of mobileIDs that are within the rectangle at some point in the time interval. 
 	 * 
-	 * @param start
-	 * @param end
-	 * @param x1
-	 * @param y1
-	 * @param x2
-	 * @param y2
+	 * @param start	 int representing the start of the time interval
+	 * @param end	 int representing the end of the time interval
+	 * @param x1	 int representing the x-coordinate of the lower-left corner of the rectangle query region
+	 * @param y1	 int representing the y-coordinate of the lower-left corner of the rectangle query region
+	 * @param x2	 int representing the x-coordinate of the upper-right corner of the rectangle query region
+	 * @param y2	 int representing the u-coordinate of the upper-right corner of the rectangle query region
 	 * 
 	 * @return a list of mobileIDs that correspond to recordNodes that intersect the query region and time interval
 	 */
@@ -594,19 +595,19 @@ public class KDTree {
 	}
 	
 	/**
+	 * This is a helper method to the above "timeInt" method that actually does all the work.
 	 * 
-	 * 
-	 * @param r
-	 * @param list
-	 * @param start
-	 * @param end
-	 * @param qr
-	 * @param xMin
-	 * @param xMax
-	 * @param yMin
-	 * @param yMax
-	 * @param timeMin
-	 * @param timeMax
+	 * @param r 	    the current recordNode in the KD-Tree that we are processing, for the sake of recursion
+	 * @param list      the list of mobileIDs that lie within the rectangle query region at some point in the time interval [start, end]
+	 * @param start     the start of the time interval
+	 * @param end       the end of the time interval
+	 * @param qr        the rectangle query region
+	 * @param xMin		the minimum possible x value of the current region
+	 * @param xMax		the maximum possible x value of the current region
+	 * @param yMin		the minimum possible y value of the current region
+	 * @param yMax		the maximum possible y value of the current region
+	 * @param timeMin	the minimum possible time value of the current region
+	 * @param timeMax	the maximum possible time value of the current region
 	 */
 	private void timeIntHelper(recordNode r, List<Long> list, int start, int end, Rectangle qr, int xMin, int xMax, int yMin, int yMax, int timeMin, int timeMax) {
 		if (r == null)
@@ -654,6 +655,157 @@ public class KDTree {
 			timeIntHelper(r.getLeft(), list, start, end, qr, xMin, xMax, yMin, yMax, timeMin, r.getTime() - 1);
 			timeIntHelper(r.getRight(), list, start, end, qr, xMin, xMax, yMin, yMax, r.getTime(), timeMax);
 		}
+	}
+	
+	/**
+	 * This method processes the data contained in a file containing timeInt queries, and returns a list of lists of longs containing the mobileIDs that are contained within
+	 * the rectangle query region at ALL time points in the interval [S, E].
+	 * 
+	 * @param timeIntFile
+	 * @return An ArrayList of Lists of Longs, corresponding to the mobileIDs that are contained in the rectangle query region at ALL time points in [S, E]
+	 */
+	public ArrayList<List<Long>> processTimeAllIntQueries(String timeIntFile) {
+		ArrayList<List<Long>> outputLines = new ArrayList<List<Long>>();
+		
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(timeIntFile));
+			String currLine = "";	
+			
+			while ((currLine = br.readLine()) != null) {
+				String[] timeIntQuery = currLine.split(",");
+				
+				int startTime = Integer.parseInt(timeIntQuery[0].trim());
+				int endTime = Integer.parseInt(timeIntQuery[1].trim());
+				int x1 = Integer.parseInt(timeIntQuery[2].trim());
+				int y1 = Integer.parseInt(timeIntQuery[3].trim());
+				int x2 = Integer.parseInt(timeIntQuery[4].trim());
+				int y2 = Integer.parseInt(timeIntQuery[5].trim());
+				
+				List<Long> mobileIDs = timeAllInt(startTime, endTime, x1, y1, x2, y2);
+				outputLines.add(mobileIDs);
+			}
+			
+			br.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return outputLines;
+	}
+	
+	/**
+	 * 
+	 * @param start
+	 * @param end
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return
+	 */
+	public List<Long> timeAllInt(int start, int end, int x1, int y1, int x2, int y2) {
+		List<Long> mobileIDs = new ArrayList<Long>();
+		HashMap<Long, ArrayList<Integer>> mobileIDTimes = new HashMap<Long, ArrayList<Integer>>();
+		
+		Line2D left = new Line2D.Double(x1, x1, y1, y2);    // line going from (x1, y1) to (x1, y2)
+		Line2D top = new Line2D.Double(x1, x2, y2, y2);     // line going from (x1, y2) to (x2, y2)
+		Line2D right = new Line2D.Double(x2, x2, y2, y1);   // line going from (x2, y2) to (x2, y1)
+		Line2D bottom = new Line2D.Double(x2, x1, y1, y1);  // line going from (x2, y1) to (x1, y1)
+		Rectangle queryRegion = new Rectangle(x1, y1, x2, y2, left, top, right, bottom);
+		
+		timeAllIntHelper(root, mobileIDTimes, start, end, queryRegion, XLOC_MIN, XLOC_MAX, YLOC_MIN, YLOC_MAX, TIME_MIN, TIME_MAX);
+		
+		// going through all the mobileIDs to check if they appear at all points in time interval [start, end]
+		for (long mobileID : mobileIDTimes.keySet()) {
+			boolean atAllTimes = true;
+			
+			// we will only add the mobileID to the List being returned if it appears at every point in the interval 
+			// (and if they lie in the specified region, of course)
+			for (int currTime = start; currTime <= end; currTime++) {
+				if (!mobileIDTimes.get(mobileID).contains(currTime)) {
+					atAllTimes = false;
+				}
+			}
+			
+			if (atAllTimes)
+				mobileIDs.add(mobileID);
+		}
+		
+		return mobileIDs;
+	}
+	
+	/**
+	 * 
+	 * @param r
+	 * @param hm
+	 * @param start
+	 * @param end
+	 * @param qr
+	 * @param xMin
+	 * @param xMax
+	 * @param yMin
+	 * @param yMax
+	 * @param timeMin
+	 * @param timeMax
+	 */
+	private void timeAllIntHelper(recordNode r, HashMap<Long, ArrayList<Integer>> hm, int start, int end, Rectangle qr, int xMin, int xMax, int yMin, int yMax, int timeMin, int timeMax) {
+		if (r == null)
+			return;
+		
+		// if the time intervals don't overlap
+		if (end < timeMin || start > timeMax) {
+			// System.out.println("Pruning at Node " + r.getPhoneID() +
+			// " based on time");
+			return; // pruning
+		}
+		// if the query region does not intersect with the node region
+		if (!qr.intersects(xMin, xMax, yMin, yMax)) {
+			// System.out.println("Pruning at Node " + r.getPhoneID() +
+			// " based on lack of intersection");
+			return; // pruning
+		}
+		
+		// if the time is within the interval specified
+		if (start <= r.getTime() && r.getTime() <= end) {
+			double wholeRecArea = Math.abs(qr.getX2() - qr.getX1()) * Math.abs(qr.getY2() - qr.getY1());
+			double area1 = triangleArea(qr.getX1(), qr.getY1(), r.getXloc(), r.getYloc(), qr.getX2(), qr.getY1());
+			double area2 = triangleArea(qr.getX1(), qr.getY1(), r.getXloc(), r.getYloc(), qr.getX1(), qr.getY2());
+			double area3 = triangleArea(qr.getX1(), qr.getY2(), r.getXloc(), r.getYloc(), qr.getX2(), qr.getY2());
+			double area4 = triangleArea(qr.getX2(), qr.getY2(), r.getXloc(), r.getYloc(), qr.getX2(), qr.getY1());
+			double result = area1 + area2 + area3 + area4;
+
+			// if the point lies within the rectangle query region
+			if (Math.abs(wholeRecArea - result) <= 0.000001) {
+				if (!hm.containsKey(r.getPhoneID()))
+					hm.put(r.getPhoneID(), new ArrayList<Integer>());
+				
+				hm.get(r.getPhoneID()).add(r.getTime());
+			}
+		}
+		
+		int discriminator = getLevel(r) % 3;
+
+		// if we're discriminating on the X value, update xMin and xMax values
+		// for recursive calls
+		if (discriminator == 0) {
+			timeAllIntHelper(r.getLeft(), hm, start, end, qr, xMin, r.getXloc() - 1, yMin, yMax, timeMin, timeMax);
+			timeAllIntHelper(r.getRight(), hm, start, end, qr, r.getXloc(), xMax, yMin, yMax, timeMin, timeMax);
+		}
+		// if we're discriminating on the Y value, update yMin and yMax values
+		// for recursive calls
+		else if (discriminator == 1) {
+			timeAllIntHelper(r.getLeft(), hm, start, end, qr, xMin, xMax, yMin, r.getYloc() - 1, timeMin, timeMax);
+			timeAllIntHelper(r.getRight(), hm, start, end, qr, xMin, xMax, r.getYloc(), yMax, timeMin, timeMax);
+		}
+		// if we're discriminating on the time value, update timeMin and timeMax
+		// values for recursive calls
+		else if (discriminator == 2) {
+			timeAllIntHelper(r.getLeft(), hm, start, end, qr, xMin, xMax, yMin, yMax, timeMin, r.getTime() - 1);
+			timeAllIntHelper(r.getRight(), hm, start, end, qr, xMin, xMax, yMin, yMax, r.getTime(), timeMax);
+		}
+		
 	}
 	
 	/**

@@ -36,6 +36,8 @@ public class Runner {
 		String triangleOutputFileName = "output2";
 		String timeIntInput = "time_int";
 		String timeIntOutput = "output3";
+		String timeAllIntInput = "time_all_int";
+		String timeAllIntOutput = "output4";
 		
 		KDTree MyTree = new KDTree();
 		
@@ -53,5 +55,10 @@ public class Runner {
 		ArrayList<List<Long>> timeIntMobileIDs = MyTree.processTimeIntQueries(timeIntInput);
 		writeOutput(timeIntOutput, timeIntMobileIDs); // method still works for timeInt task
 		System.out.println("Done with Task 3!");
+		
+		// Task 4
+		ArrayList<List<Long>> timeIntAllMobileIDs = MyTree.processTimeAllIntQueries(timeAllIntInput);
+		writeOutput(timeAllIntOutput, timeIntAllMobileIDs);
+		System.out.println("Done with Task 4!");
 	}
 }
