@@ -726,6 +726,7 @@ public class KDTree {
 			for (int currTime = start; currTime <= end; currTime++) {
 				if (!mobileIDTimes.get(mobileID).contains(currTime)) {
 					atAllTimes = false;
+					break;
 				}
 			}
 			
@@ -756,14 +757,12 @@ public class KDTree {
 		
 		// if the time intervals don't overlap
 		if (end < timeMin || start > timeMax) {
-			// System.out.println("Pruning at Node " + r.getPhoneID() +
-			// " based on time");
+			//System.out.println("Pruning at Node " + r.getPhoneID() + " based on time in Task 4");
 			return; // pruning
 		}
 		// if the query region does not intersect with the node region
 		if (!qr.intersects(xMin, xMax, yMin, yMax)) {
-			// System.out.println("Pruning at Node " + r.getPhoneID() +
-			// " based on lack of intersection");
+			//System.out.println("Pruning at Node " + r.getPhoneID() + " based on lack of intersection in Task 4");
 			return; // pruning
 		}
 		

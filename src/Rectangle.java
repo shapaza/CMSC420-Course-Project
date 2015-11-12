@@ -49,6 +49,28 @@ public class Rectangle {
 		Line2D rectLine3 = new Line2D.Double(xMax, xMax, yMax, yMin); // rectangle line segment from (xMax, yMax) to (xMax, yMin)
 		Line2D rectLine4 = new Line2D.Double(xMax, xMin, yMin, yMin); // rectangle line segment from (xMax, yMin) to (xMin, yMin)
 		
+		// if the node rectangle region is wholly contained within the query region
+		double queryRegionArea = Math.abs(x2 - x1) * Math.abs(y2 - y1);
+		double queryArea1 = triangleArea(x1, y1, xMin, yMin, x2, y1);
+		double queryArea2 = triangleArea(x2, y1, xMin, yMin, x2, y2);
+		double queryArea3 = triangleArea(x2, y2, xMin, yMin, x1, y2);
+		double queryArea4 = triangleArea(x1, y2, xMin, yMin, x1, y1);
+		double queryAreaResult = queryArea1 + queryArea2 + queryArea3 + queryArea4;
+						
+		if (Math.abs(queryRegionArea - queryAreaResult) <= 0.000001)
+			return true;
+				
+		// if the query region is wholly contained within the node rectangle region
+		double nodeRegionArea = Math.abs(xMax - xMin) * Math.abs(yMax - yMin);
+		double nodeArea1 = triangleArea(xMin, yMin, x1, y1, xMax, yMin);
+		double nodeArea2 = triangleArea(xMax, yMin, x1, y1, xMax, yMax);
+		double nodeArea3 = triangleArea(xMax, yMax, x1, y1, xMin, yMax);
+		double nodeArea4 = triangleArea(xMin, yMax, x1, y1, xMin, yMin);
+		double nodeAreaResult = nodeArea1+ nodeArea2 + nodeArea3 + nodeArea4;
+				
+		if (Math.abs(nodeRegionArea - nodeAreaResult) <= 0.000001)
+			return true;		
+		
 		// if the node rectangle region intersects with the query region
 		if (rectLine1.intersectsLine(left) || rectLine1.intersectsLine(top) 
 		   || rectLine1.intersectsLine(right) || rectLine1.intersectsLine(bottom)) {
@@ -66,28 +88,6 @@ public class Rectangle {
 		   || rectLine4.intersectsLine(right) || rectLine4.intersectsLine(bottom)) {
 			return true;
 		}
-		
-		// if the query region is wholly contained within the node rectangle region
-		double nodeRegionArea = Math.abs(xMax - xMin) * Math.abs(yMax - yMin);
-		double nodeArea1 = triangleArea(xMin, yMin, x1, y1, xMax, yMin);
-		double nodeArea2 = triangleArea(xMax, yMin, x1, y1, xMax, yMax);
-		double nodeArea3 = triangleArea(xMax, yMax, x1, y1, xMin, yMax);
-		double nodeArea4 = triangleArea(xMin, yMax, x1, y1, xMin, yMin);
-		double nodeAreaResult = nodeArea1+ nodeArea2 + nodeArea3 + nodeArea4;
-		
-		if (Math.abs(nodeRegionArea - nodeAreaResult) <= 0.000001)
-			return true;
-		
-		// if the node rectangle region is wholly contained within the query region
-		double queryRegionArea = Math.abs(x2 - x1) * Math.abs(y2 - y1);
-		double queryArea1 = triangleArea(x1, y1, xMin, yMin, x2, y1);
-		double queryArea2 = triangleArea(x2, y1, xMin, yMin, x2, y2);
-		double queryArea3 = triangleArea(x2, y2, xMin, yMin, x1, y2);
-		double queryArea4 = triangleArea(x1, y2, xMin, yMin, x1, y1);
-		double queryAreaResult = queryArea1 + queryArea2 + queryArea3 + queryArea4;
-		
-		if (Math.abs(queryRegionArea - queryAreaResult) <= 0.000001)
-			return true;
 		
 		return false;
 	}

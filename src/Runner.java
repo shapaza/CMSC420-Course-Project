@@ -53,7 +53,7 @@ public class Runner {
 		
 		// Task 3
 		ArrayList<List<Long>> timeIntMobileIDs = MyTree.processTimeIntQueries(timeIntInput);
-		writeOutput(timeIntOutput, timeIntMobileIDs); // method still works for timeInt task
+		writeOutput(timeIntOutput, timeIntMobileIDs);
 		System.out.println("Done with Task 3!");
 		
 		// Task 4
